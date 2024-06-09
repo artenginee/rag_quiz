@@ -1,6 +1,10 @@
 import streamlit as st
 from llm import generate_quiz
 
+import(‘pysqlite3’)
+import sys
+sys.modules[‘sqlite3’] = sys.modules.pop(‘pysqlite3’)
+
 st.set_page_config(
     page_title="QUIZ",
     page_icon="🧊",
