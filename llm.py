@@ -13,9 +13,10 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_openai import ChatOpenAI
 
 import openai
+import streamlit as st
 
 def generate_quiz():
-  os.environ["OPENAI_API_KEY"] = 'sk-proj-fOZZg6kjAWsnHQ7GbcNuT3BlbkFJmlxkslzoQ2GOFPyHaQNh'   # 개인용
+  os.environ["OPENAI_API_KEY"] =  st.secrets["OPENAI_API_KEY"]
 
   llm = ChatOpenAI(model="gpt-3.5-turbo")
 
