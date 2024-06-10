@@ -19,20 +19,19 @@ def generate_quiz():
   os.environ["OPENAI_API_KEY"] =  st.secrets["OPENAI_API_KEY"]
 
   llm = ChatOpenAI(model="gpt-3.5-turbo")
-
-  # loader = PyPDFDirectoryLoader("AI_major/인공지능서비스개발/과제(~0611)/quiz/doc/", extract_images=False)
+  # PDF 자료를 /doc 폴더에 추가, 이미지는 시간이 너무 오래 걸려서 false 처리함
   loader = PyPDFDirectoryLoader("doc/", extract_images=False)
 
   docs = loader.load()
 
   print('docs load')
-
+  # 읽은 데이터를 chunk 크기 만큼 쪼갬, 분리한 단어들을 Embedding 작업을 거친 후 Chroma DB 형태로 저장 
   text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
   splits = text_splitter.split_documents(docs)
   text = " ".join([re.sub('\s+', ' ', d.page_content) for d in docs])
   vectorstore = Chroma.from_documents(documents=splits, embedding=OpenAIEmbeddings())
 
-  # Retrieve and generate using the relevant snippets of the blog.
+  # DB에 검색할 변수 정의
   retriever = vectorstore.as_retriever()
   prompt = hub.pull("rlm/rag-prompt")
 
@@ -40,7 +39,7 @@ def generate_quiz():
   def format_docs(docs):
       return "\n\n".join(doc.page_content for doc in docs)
 
-
+  # llm chain 형식으로 관련 질문에 응답을 제대로 하는지 테스트하기 위한 함수 설정
   rag_chain = (
       {"context": retriever | format_docs, "question": RunnablePassthrough()}
       | prompt
@@ -48,6 +47,7 @@ def generate_quiz():
       | StrOutputParser()
   )
 
+  # 퀴즈 생성을 위한 프롬프트 작성
   question = """
           Write a set of multiple-choice quiz questions with four options each 
           to review and internalise the following information.
@@ -120,6 +120,7 @@ def generate_quiz():
       },
   }
 
+  # chat 형식의 프롬프트 작성 후 퀴즈 생성
   completion = openai.chat.completions.create(
     model='gpt-3.5-turbo',
     messages=[
@@ -130,9 +131,9 @@ def generate_quiz():
             }
         ])
 
-  # completion.choices[0].message.content
+  # 만들어진 퀴즈의 json 형태로 변환을 위해 앞뒤로 불필요한 부분 제거
   print('made quiz')
-
+ 
   outputs = completion.choices[0].message.content
   outputs = outputs.replace('\n', '')
   left = outputs.find('{')
@@ -142,4 +143,5 @@ def generate_quiz():
   print(quiz_json)
   print(len(quiz_json))
 
+  # json 형태의 최종 퀴즈 목록 반환
   return quiz_json
