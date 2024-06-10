@@ -1,7 +1,8 @@
+import pysqlite3
 __import__('pysqlite3')
 import sys
-import sqlite3
 sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
+
 
 import streamlit as st
 from llm import generate_quiz
